@@ -57,7 +57,7 @@ class NavigationController(object):
         self._cubes = cubes
         self._transform_listener = tf.TransformListener()
         self._move_base_client = actionlib.SimpleActionClient('move_base', MoveBaseAction)
-        self.cmd_vel_pub = rospy.Publisher('base_footprint/cmd_vel', Twist, queue_size=5)
+        self._cmd_vel_pub = rospy.Publisher('base_footprint/cmd_vel', Twist, queue_size=5)
 
     def get_cube_pose(self, cube):
         try:
@@ -113,12 +113,12 @@ class NavigationController(object):
         """
         Taken from source 1)
         """
-        rospy.loginfo("Stopping the robot...")
+        rospy.loginfo('Stopping the robot...')
         # Cancel any active goals
         self._move_base_client.cancel_goal()
         rospy.sleep(2)
         # Stop the robot
-        self.cmd_vel_pub.publish(Twist())
+        self._cmd_vel_pub.publish(Twist())
         rospy.sleep(1)
 
 if __name__ == '__main__':
