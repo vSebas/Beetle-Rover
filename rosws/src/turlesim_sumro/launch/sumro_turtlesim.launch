@@ -1,0 +1,35 @@
+<launch>
+  <param name="background_b" value="10" type="int" />
+  <node name="turtlesim_extended" pkg="turtlesim" type="turtlesim_node" output="screen" respawn="false" />
+  <node pkg="rosservice" type="rosservice" name="clear_bg" args="call --wait /kill 'turtle1'" /> 
+
+  <node pkg="rosservice" type="rosservice" name="spawn1" args="call --wait /spawn 0.5 0.5 0.0 'base_footprint'" />
+  <node pkg="turtle_tf" type="turtle_tf_broadcaster" name="Rover_TF" args= "base_footprint" />
+
+  <node pkg="rosservice" type="rosservice" name="spawn2" args="call --wait /spawn 5.0 5.0 0.7 'Cube1'" />
+  <node pkg="turtle_tf" type="turtle_tf_broadcaster" name="Cube1_tf" args= "Cube1" />
+
+  <node pkg="rosservice" type="rosservice" name="spawn3" args="call --wait /spawn 4.0 8.0 1.5 'Cube2'" />
+  <node pkg="turtle_tf" type="turtle_tf_broadcaster" name="Cube2_tf" args= "Cube2" />
+  
+  <node pkg="rosservice" type="rosservice" name="spawn4" args="call --wait /spawn 5.0 1.0 3.0 'Cube3'" />
+  <node pkg="turtle_tf" type="turtle_tf_broadcaster" name="Cube3_tf" args= "Cube3" />
+  
+  <node pkg="rosservice" type="rosservice" name="spawn5" args="call --wait /spawn 6.0 4.0 0.0 'Cube4'" />
+  <node pkg="turtle_tf" type="turtle_tf_broadcaster" name="Cube4_tf" args= "Cube4" />
+  
+  <node pkg="rosservice" type="rosservice" name="spawn6" args="call --wait /spawn 3.0 1.0 4.0 'Cube5'" />
+  <node pkg="turtle_tf" type="turtle_tf_broadcaster" name="Cube5_tf" args= "Cube5" />
+  
+  <node pkg="rosservice" type="rosservice" name="spawn7" args="call --wait /spawn 1.5 6.3 5.8 'Cube6'" />
+  <node pkg="turtle_tf" type="turtle_tf_broadcaster" name="Cube6_tf" args= "Cube6" />
+  
+  <node pkg="rosservice" type="rosservice" name="spawn8" args="call --wait /spawn 2.0 9.0 0.0 'Cube7'" />
+  <node pkg="turtle_tf" type="turtle_tf_broadcaster" name="Cube7_tf" args= "Cube7" />
+
+
+
+  
+
+</launch>
+

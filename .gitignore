@@ -1,0 +1,11 @@
+# ROS
+build/
+devel/
+.catkin_workspace
+# top-level CMakeLists.txt
+rosws/src/CMakeLists.txt
+
+
+# Visual Studio Code
+.vscode
+
