@@ -21,9 +21,10 @@ References:
 import rospy
 import actionlib
 from actionlib_msgs.msg import GoalStatus
-from geometry_msgs.msg import Pose, Point, Quaternion, Twist
 from move_base_msgs.msg import MoveBaseAction, MoveBaseGoal
-import tf
+from geometry_msgs.msg import Transform, Twist, Quaternion
+
+import tf2_ros
 
 class Cube(object):
     """ Represents a cube in the map """
@@ -31,7 +32,8 @@ class Cube(object):
     def __init__(self, number):
         self._visited = False
         self._number = number
-        self._pose = None
+        self._xpos = None
+        self._ypos = None
     
     @property
     def number(self):
@@ -53,12 +55,20 @@ class Cube(object):
         return self._visited
 
     @property
-    def pose(self):
-        return self._pose
+    def xpos(self):
+        return self._xpos
     
-    @pose.setter
-    def set_pose(self, pose):
-        self._pose = pose
+    @property
+    def ypos(self):
+        return self._ypos
+    
+    @xpos.setter
+    def set_xpos(self, xpos):
+        self._xpos = xpos
+    
+    @ypos.setter
+    def set_ypos(self, ypos):
+        self._ypos = ypos
     
     def visit(self):
         """ Marks cube as visited """
@@ -74,17 +84,18 @@ class NavigationController(object):
     """
 
     def __init__(self):
-        rospy.init_node('navigation_controller', anonymous=False)        
         rospy.on_shutdown(self._shutdown)
 
         # We know there will be 7 cubes in total for the task
         self._cubes = [Cube(i) for i in range(1, 8)]
 
-        self._transform_listener = tf.TransformListener()
+        self._tf_buffer = tf2_ros.Buffer()
+        self._tf_listener = tf2_ros.TransformListener(self._tf_buffer)
+
         self._move_base_client = actionlib.SimpleActionClient('move_base', MoveBaseAction)
         self._cmd_vel_pub = rospy.Publisher('base_footprint/cmd_vel', Twist, queue_size=5)
 
-    def get_cube_pose(self, cube):
+    def get_cube_transformation(self, cube):
         """
         Returns the transform from the cube's coordinate frame
         to the world's coordinate frame
@@ -103,8 +114,13 @@ class NavigationController(object):
             goal = MoveBaseGoal()
             goal.target_pose.header.frame_id = 'world'
             goal.target_pose.header.stamp = rospy.Time.now()
-            pose = self.get_cube_pose(cube)
-            goal.target_pose.pose = pose        
+            trans = self.get_cube_transformation(cube)
+
+            goal.target_pose.pose.position.x = trans.transform.translation.x
+            goal.target_pose.pose.position.y = trans.transform.translation.y
+            goal.target_pose.pose.position.z = 0
+            goal.target_pose.pose.orientation = trans.transform.rotation
+
             if self._move(goal):
                 cube.visit()
             else:
@@ -157,18 +173,15 @@ class NavigationController(object):
         Returns the transform from source_frame's coordinate frame
         to the target_frame's coordinate frame
         """
-        pose = None
+        trans = None
         current_retries = 0
-        while pose is None and (max_retries is None or current_retries < max_retries):
+        while trans is None and (max_retries is None or current_retries < max_retries):
             try:
-                self._transform_listener.waitForTransform(target_frame, source_frame, rospy.Time(), rospy.Duration(4.0))
-                position, orientation = self._transform_listener.lookupTransform(target_frame, source_frame, rospy.Time(0))
-                pose = Pose(Point(*position), Quaternion(*orientation))
-            except (tf.LookupException, tf.ConnectivityException, tf.ExtrapolationException) as e:
+                trans = self._tf_buffer.lookup_transform(target_frame, source_frame, rospy.Time.now(), rospy.Duration(4.0))
+            except (tf2_ros.LookupException, tf2_ros.ConnectivityException, tf2_ros.ExtrapolationException) as e:
                 rospy.logerr('Error getting frame transform ({} -> {}): {}'.format(source_frame, target_frame, e))
                 current_retries += 1
-                pose = None
-        return pose
+        return trans
 
     def _shutdown(self):
         """ Taken from source 1) """
@@ -181,5 +194,10 @@ class NavigationController(object):
         rospy.sleep(1)
 
 if __name__ == '__main__':
-    controller = NavigationController()
-    controller.run()
+
+    try:
+        rospy.init_node('navigation_controller', anonymous=False)        
+        controller = NavigationController()
+        controller.run()
+    except rospy.ROSInitException:
+        rospy.loginfo('Navigation Controller ended.')
