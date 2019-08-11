@@ -36,14 +36,20 @@ class Cube(object):
     @property
     def number(self):
         return self._number
+
+    @property
+    def visit_pending(self):
+        """ Returns True if a visit to this cube is pending """
+        return self.is_target and not self.visited
     
     @property
-    def is_good(self):
-        # rule: odd numbers are good cubes
+    def is_target(self):
+        """ Returns True if this cube should be visited """
         return self.number % 2 != 0
     
     @property
     def visited(self):
+        """ Returns True if this cube is marked as visited """
         return self._visited
 
     @property
@@ -55,6 +61,7 @@ class Cube(object):
         self._pose = pose
     
     def visit(self):
+        """ Marks cube as visited """
         self._visited = True
 
     def __str__(self):
@@ -89,7 +96,7 @@ class NavigationController(object):
         Creates a goal to move towards a cube
         and sends that goal to the move base server
         """
-        if cube.is_good and not cube.visited:
+        if cube.visit_pending:
             rospy.loginfo('Attempting to move towards {}'.format(cube))
             self._move_base_client.wait_for_server(rospy.Duration(4.0))
 
@@ -116,8 +123,8 @@ class NavigationController(object):
         Returns a list of the discovered (good) cubes
         TODO: Sort the list by distance to the robot
         """
-        is_pending = lambda cube: cube.is_good and not cube.visited
-        return filter(is_pending, self._cubes)
+        visit_pending = lambda cube: cube.visit_pending
+        return filter(visit_pending, self._cubes)
 
     def _move(self, goal):
         """ 
@@ -147,7 +154,7 @@ class NavigationController(object):
 
     def _get_frame_transform(self, target_frame, source_frame, max_retries=None):
         """
-        Returns the transform from source_frames' coordinate frame
+        Returns the transform from source_frame's coordinate frame
         to the target_frame's coordinate frame
         """
         pose = None
