@@ -1,0 +1,26 @@
+<launch>
+  <arg name="serial_no_camera1"    default="844212071204"/> <!-- Note: Replace with actual serial number -->
+  <!-- <arg name="serial_no_camera2"    default="844212071204"/>  -->
+  <arg name="cam1_name"            default="camFront"/>
+
+  <group ns="sensors">
+  <group ns="$(arg cam1_name)">
+    <include file="$(find camera_launch)/launch/realsense.launch.xml">
+      <arg name="serial_no"    value="$(arg serial_no_camera1)"/>
+      <arg name="frame_id"     value="$(arg cam1_name)"/>
+      <arg name="enable_pointcloud" value="true"/>
+      <arg name="enable_sync"       value="true"/>
+      <arg name="align_depth"       value="true"/>
+      
+      <arg name="depth_fps"                value="15"/>
+      <arg name="infra1_fps"               value="15"/>
+      <arg name="infra2_fps"               value="15"/>
+      <arg name="color_fps"                value="15"/>
+    </include>
+  </group>
+  </group>
+
+
+
+
+</launch>
