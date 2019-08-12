@@ -19,6 +19,7 @@ References:
 """
 
 import rospy
+import math
 import actionlib
 from actionlib_msgs.msg import GoalStatus
 from move_base_msgs.msg import MoveBaseAction, MoveBaseGoal
@@ -95,12 +96,27 @@ class NavigationController(object):
         self._move_base_client = actionlib.SimpleActionClient('move_base', MoveBaseAction)
         self._cmd_vel_pub = rospy.Publisher('base_footprint/cmd_vel', Twist, queue_size=5)
 
+    def get_rover_transformation(self):
+        """
+        Returns rover's position and orientation from the 
+        base_footprint frame in relation to the world's frame
+        """
+        return self._get_frame_transform('world', 'base_footprint')
+
     def get_cube_transformation(self, cube):
         """
         Returns the transform from the cube's coordinate frame
         to the world's coordinate frame
         """
         return self._get_frame_transform('world', 'Cube{}'.format(cube.number))
+
+    def _euclideanDistanceToRover(self, cube):
+        """
+        Returns distance between rover's position and a cube's position
+        """
+        cubeTrans = self.get_cube_transformation(cube)
+        roverTrans = self.get_rover_transformation()
+        return math.sqrt((cubeTrans.transform.translation.x - roverTrans.transform.translation.x)**2 + (cubeTrans.transform.translation.y - roverTrans.transform.translation.y)**2)
 
     def move_to_cube(self, cube):
         """
@@ -114,12 +130,13 @@ class NavigationController(object):
             goal = MoveBaseGoal()
             goal.target_pose.header.frame_id = 'world'
             goal.target_pose.header.stamp = rospy.Time.now()
-            trans = self.get_cube_transformation(cube)
+            cubeTrans = self.get_cube_transformation(cube)
+            roverTrans = self.get_rover_transformation()
 
-            goal.target_pose.pose.position.x = trans.transform.translation.x
-            goal.target_pose.pose.position.y = trans.transform.translation.y
+            goal.target_pose.pose.position.x = cubeTrans.transform.translation.x
+            goal.target_pose.pose.position.y = cubeTrans.transform.translation.y
             goal.target_pose.pose.position.z = 0
-            goal.target_pose.pose.orientation = trans.transform.rotation
+            goal.target_pose.pose.orientation = cubeTrans.transform.rotation
 
             if self._move(goal):
                 cube.visit()
@@ -131,7 +148,8 @@ class NavigationController(object):
     def run(self):
         pending_cubes = self._pending_cubes()
         while not rospy.is_shutdown() and pending_cubes:
-            self.move_to_cube(pending_cubes[0])
+            next_goal = min(pending_cubes, key=self._euclideanDistanceToRover) 
+            self.move_to_cube(next_goal) #(pending_cubes[0])
             pending_cubes = self._pending_cubes()
 
     def _pending_cubes(self):
@@ -177,7 +195,7 @@ class NavigationController(object):
         current_retries = 0
         while trans is None and (max_retries is None or current_retries < max_retries):
             try:
-                trans = self._tf_buffer.lookup_transform(target_frame, source_frame, rospy.Time.now(), rospy.Duration(4.0))
+                trans = self._tf_buffer.lookup_transform(target_frame, source_frame, rospy.Time(0), rospy.Duration(4.0))
             except (tf2_ros.LookupException, tf2_ros.ConnectivityException, tf2_ros.ExtrapolationException) as e:
                 rospy.logerr('Error getting frame transform ({} -> {}): {}'.format(source_frame, target_frame, e))
                 current_retries += 1
