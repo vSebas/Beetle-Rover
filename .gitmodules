@@ -1,0 +1,4 @@
+[submodule "rosws/src/aruco_analyzer"]
+	path = rosws/src/aruco_analyzer
+	url = git@gitlab.tubit.tu-berlin.de:aegarcia/aruco_analyzer.git
+    branch = custom-camera
