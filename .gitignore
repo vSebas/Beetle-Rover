@@ -2,10 +2,12 @@
 build/
 devel/
 .catkin_workspace
-# top-level CMakeLists.txt
-rosws/src/CMakeLists.txt
 
+# Top-level CMakeLists.txt
+rosws/src/CMakeLists.txt
 
 # Visual Studio Code
 .vscode
 
+# Python bytecode files
+*.pyc

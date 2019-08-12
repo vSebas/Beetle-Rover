@@ -18,65 +18,16 @@ References:
       * https://answers.ros.org/question/203274/frame-passed-to-lookuptransform-does-not-exist/?answer=203281#post-id-203281
 """
 
-import rospy
-import math
 import actionlib
-from actionlib_msgs.msg import GoalStatus
-from move_base_msgs.msg import MoveBaseAction, MoveBaseGoal
-from geometry_msgs.msg import Transform, Twist, Quaternion
-
+import math
+import rospy
 import tf2_ros
 
-class Cube(object):
-    """ Represents a cube in the map """
-    
-    def __init__(self, number):
-        self._visited = False
-        self._number = number
-        self._xpos = None
-        self._ypos = None
-    
-    @property
-    def number(self):
-        return self._number
+from actionlib_msgs.msg import GoalStatus
+from cube import Cube
+from geometry_msgs.msg import Transform, Twist, Quaternion
+from move_base_msgs.msg import MoveBaseAction, MoveBaseGoal
 
-    @property
-    def visit_pending(self):
-        """ Returns True if a visit to this cube is pending """
-        return self.is_target and not self.visited
-    
-    @property
-    def is_target(self):
-        """ Returns True if this cube should be visited """
-        return self.number % 2 != 0
-    
-    @property
-    def visited(self):
-        """ Returns True if this cube is marked as visited """
-        return self._visited
-
-    @property
-    def xpos(self):
-        return self._xpos
-    
-    @property
-    def ypos(self):
-        return self._ypos
-    
-    @xpos.setter
-    def set_xpos(self, xpos):
-        self._xpos = xpos
-    
-    @ypos.setter
-    def set_ypos(self, ypos):
-        self._ypos = ypos
-    
-    def visit(self):
-        """ Marks cube as visited """
-        self._visited = True
-
-    def __str__(self):
-        return 'Cube (number={}, visited={})'.format(self.number, self.visited)
 
 class NavigationController(object):
     """
@@ -108,7 +59,7 @@ class NavigationController(object):
         Returns the transform from the cube's coordinate frame
         to the world's coordinate frame
         """
-        return self._get_frame_transform('world', 'Cube{}'.format(cube.number))
+        return self._get_frame_transform('world', cube.frame_id)
 
     def _euclideanDistanceToRover(self, cube):
         """
