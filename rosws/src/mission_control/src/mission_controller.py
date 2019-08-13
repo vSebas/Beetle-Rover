@@ -19,11 +19,12 @@ References:
    * http://wiki.ros.org/teb_local_planner/Tutorials/Incorporate%20customized%20Obstacles
 """
 
-import actionlib
 import math
+from threading import Thread
+
+import actionlib
 import rospy
 import tf2_ros
-
 from actionlib_msgs.msg import GoalStatus
 from geometry_msgs.msg import Transform, Twist, Quaternion
 from move_base_msgs.msg import MoveBaseAction, MoveBaseGoal
@@ -63,8 +64,13 @@ class MissionController(object):
 
     def run(self):
             """ Runs the mission """
+            # 1) Start the cube discoverer
+            discover_cubes_thread = Thread(self._discover_cubes)
+            discover_cubes_thread.daemon = True
+            discover_cubes_thread.start()
+
             # TODO: Add pending logic for mission state control
-            # TODO: Run _discover_cubes on it's own thread
+
             while not rospy.is_shutdown() and not self._mission_finished():
                 next_goal = self._nearest_unvisited_cube()
                 self._move_to_cube(next_goal, self._visit_cube)
@@ -130,7 +136,7 @@ class MissionController(object):
         self._pending_cubes = [Cube(i+1) for i in range(self._n_total_cubes)]
         while not rospy.is_shutdown() and self._pending_cubes:
             for index, cube in enumerate(self._pending_cubes):
-                transform = self._get_frame_transform('world', cube.frame_id)
+                transform = self._get_frame_transform('world', cube.frame_id, log_error=False)
                 if transform:
                     self._handle_discovered_cube(cube, transform)
                     self._pending_cubes = self._pending_cubes[:index] + self._pending_cubes[index+1:]
