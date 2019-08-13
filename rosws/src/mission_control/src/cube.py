@@ -1,5 +1,12 @@
 from geometry_msgs.msg import Point32
 
+# Cube size in meters
+CUBE_SIZE = 0.20
+# Approach zone size in meters
+APPROACH_ZONE_SIZE = 0.30
+# Forbidden zone in meters
+FORBIDDEN_ZONE_SIZE = 0.5
+
 class Cube(object):
     """ Represents a cube in the map """
     
@@ -27,6 +34,14 @@ class Cube(object):
     @ypos.setter
     def ypos(self, ypos):
         self._ypos = ypos
+    
+    @property
+    def approach_zone_xpos(self):
+        return self.xpos + CUBE_SIZE + APPROACH_ZONE_SIZE/2.0
+
+    @property
+    def approach_zone_ypos(self):
+        return self.ypos + CUBE_SIZE + APPROACH_ZONE_SIZE/2.0
 
     @property
     def bounding_box(self):
@@ -51,13 +66,12 @@ class Cube(object):
         
         """
 
-        # We asumme each cube is 20 cm
-        offset = 0.002
+        offset = CUBE_SIZE
         # If the cube is not a target we
         # should "inflate" it's size
-        # so that it includes it's forbidden zone (50 cm)
+        # so that it includes it's forbidden zone
         if not self.is_target:
-            offset += 0.005
+            offset += FORBIDDEN_ZONE_SIZE
 
         v1 = Point32(x=self.xpos-offset, y=self.ypos+offset)
         v2 = Point32(x=self.xpost+offset, y=self.ypos+offset)
