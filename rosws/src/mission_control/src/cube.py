@@ -83,7 +83,7 @@ class Cube(object):
     @property
     def frame_id(self):
         """ Returns a string representing this cube's frame id """
-        return 'C{:03d}'.format(self.number)
+        return 'cube{:03d}'.format(self.number)
     
     @property
     def is_target(self):
