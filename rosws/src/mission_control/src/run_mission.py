@@ -8,4 +8,4 @@ if __name__ == '__main__':
         controller = MissionController(n_total_cubes=7, n_target_cubes=3)
         controller.run()
     except rospy.ROSInitException:
-        rospy.loginfo('Simulation mission ended')
+        rospy.loginfo('Mission ended')
