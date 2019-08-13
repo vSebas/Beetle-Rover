@@ -1,5 +1,5 @@
 """
-The navigation controller commands the robot movement so that it visits each target cube once.
+The mission controller commands the robot movement so that it visits each target cube once.
 
 References:
 1) Motive: How to set navigation goals?
@@ -33,7 +33,7 @@ from cube import Cube
 
 class MissionController(object):
     """
-    The mission controll will coordinate all relevant
+    The mission controller will coordinate all relevant
     subcomponents to try to achieve the required tasks
     """
 
