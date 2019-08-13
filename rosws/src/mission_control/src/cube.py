@@ -14,10 +14,19 @@ class Cube(object):
         self._number = number
         self._xpos = None
         self._ypos = None
+        self._orientation = None
     
     @property
     def number(self):
         return self._number
+    
+    @property
+    def orientation(self):
+        return self._orientation
+    
+    @orientation.setter
+    def orientation(self, orientation):
+        self._orientation = orientation
 
     @property
     def xpos(self):
@@ -74,7 +83,7 @@ class Cube(object):
             offset += FORBIDDEN_ZONE_SIZE
 
         v1 = Point32(x=self.xpos-offset, y=self.ypos+offset)
-        v2 = Point32(x=self.xpost+offset, y=self.ypos+offset)
+        v2 = Point32(x=self.xpos+offset, y=self.ypos+offset)
         v3 = Point32(x=self.xpos+offset, y=self.ypos-offset)
         v4 = Point32(x=self.xpos-offset, y=self.ypos-offset)
         

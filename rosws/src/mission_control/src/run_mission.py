@@ -1,4 +1,5 @@
 #!/usr/bin/env python
+import rospy
 
 from mission_controller import MissionController
 
@@ -8,4 +9,4 @@ if __name__ == '__main__':
         controller = MissionController(n_total_cubes=7, n_target_cubes=3)
         controller.run()
     except rospy.ROSInitException:
-        rospy.loginfo('Mission ended')
+        rospy.loginfo('Mission controller ended')

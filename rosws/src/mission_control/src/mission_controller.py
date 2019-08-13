@@ -20,6 +20,7 @@ References:
 """
 
 import math
+import sys
 from threading import Thread
 
 import actionlib
@@ -60,20 +61,18 @@ class MissionController(object):
 
         self._move_base_client = actionlib.SimpleActionClient('move_base', MoveBaseAction)
         self._cmd_vel_publisher = rospy.Publisher('base_footprint/cmd_vel', Twist, queue_size=5)
-        self._obstacles_publisher = rospy.Publisher('obstacles', ObstacleArrayMsg, queue_size=5)
+        # TODO: FIXME:
+        # self._obstacles_publisher = rospy.Publisher('obstacles', ObstacleArrayMsg, queue_size=5)
 
     def run(self):
             """ Runs the mission """
-            # 1) Start the cube discoverer
-            discover_cubes_thread = Thread(self._discover_cubes)
-            discover_cubes_thread.daemon = True
-            discover_cubes_thread.start()
-
             # TODO: Add pending logic for mission state control
-
+            self._pending_cubes = [Cube(i+1) for i in range(self._n_total_cubes)]
             while not rospy.is_shutdown() and not self._mission_finished():
+                self._discover_cubes()
                 next_goal = self._nearest_unvisited_cube()
-                self._move_to_cube(next_goal, self._visit_cube)
+                if next_goal is not None:
+                    self._visit_cube(next_goal)
     
     def _get_rover_transformation(self):
         """
@@ -100,7 +99,10 @@ class MissionController(object):
 
         obstacle_msg.obstacles.append(obstacle)
 
-        self._obstacles_publisher.publish(obstacle_msg)
+        # TODO:
+        # FIXME: Could not process inbound connection: topic types do not match: 
+        # [sensor_msgs/PointCloud2] vs. [costmap_converter/ObstacleArrayMsg]{'topic': '/obstacles', 'tcp_nodelay': '0', 'md5sum': '1158d486dd51d683ce2f1be655c3c181', 'type': 'sensor_msgs/PointCloud2', 'callerid': '/move_base'}
+        #self._obstacles_publisher.publish(obstacle_msg)
 
     def _euclidean_distance_to_rover(self, cube):
         """
@@ -116,32 +118,32 @@ class MissionController(object):
 
     def _handle_discovered_cube(self, cube, transform):
         # Save the coordinates where it was discovered in the world frame
-        cube.xpos = transform.translation.x
-        cube.ypos = transform.translation.y
+        cube.xpos = transform.transform.translation.x
+        cube.ypos = transform.transform.translation.y
+        cube.orientation = transform.transform.rotation
 
         rospy.loginfo('Discovered a new cube: {}'.format(cube))
 
         if cube.is_target:
+            rospy.loginfo('Cube is a target')
             self._unvisited_cubes.append(cube)
         else:
+            rospy.loginfo('Cube is an obstacle')
             self._obstacle_cubes.append(cube)
             self._publish_obstacle(cube)
 
     def _discover_cubes(self):
         """
-        Continuously searches for pending cubes to be discovered 
-        by listening to the transformations that the aruco_analyzer publishes
+        Listens to the transformations that the aruco_analyzer publishes
         when it detects a cube
         """
-        self._pending_cubes = [Cube(i+1) for i in range(self._n_total_cubes)]
-        while not rospy.is_shutdown() and self._pending_cubes:
-            for index, cube in enumerate(self._pending_cubes):
-                transform = self._get_frame_transform('world', cube.frame_id, log_error=False)
-                if transform:
-                    self._handle_discovered_cube(cube, transform)
-                    self._pending_cubes = self._pending_cubes[:index] + self._pending_cubes[index+1:]
-
-    def _move_to_cube(self, cube, handler):
+        for cube in self._pending_cubes:
+            transform = self._get_frame_transform('world', cube.frame_id, log_error=True)
+            if transform:
+                self._pending_cubes = filter(lambda c: c.number != cube.number, self._pending_cubes)
+                self._handle_discovered_cube(cube, transform)
+        
+    def _visit_cube(self, cube):
         """
         Creates a goal to move towards a cube
         and sends that goal to the move base server
@@ -153,9 +155,10 @@ class MissionController(object):
         goal.target_pose.header.frame_id = 'world'
         goal.target_pose.header.stamp = rospy.Time.now()
 
-        goal.target_pose.pose.position.x = cube.xpos
-        goal.target_pose.pose.position.y = cube.ypos
+        goal.target_pose.pose.position.x = cube.approach_zone_xpos
+        goal.target_pose.pose.position.y = cube.approach_zone_ypos
         goal.target_pose.pose.position.z = 0
+        goal.target_pose.pose.orientation = cube.orientation
 
         if self._move(goal):
             self._handle_visited_cube(cube)
@@ -163,7 +166,9 @@ class MissionController(object):
             rospy.loginfo('Failed to move towards {}'.format(cube))
 
     def _nearest_unvisited_cube(self):
-        return min(self._unvisited_cubes, key=self._euclidean_distance_to_rover)
+        if self._unvisited_cubes:
+            return min(self._unvisited_cubes, key=self._euclidean_distance_to_rover)
+        return None
 
     def _mission_finished(self):
         return len(self._visited_cubes) == self._n_target_cubes
@@ -194,7 +199,7 @@ class MissionController(object):
             rospy.loginfo('Goal state: {}'.format(state))
         return success
 
-    def _get_frame_transform(self, target_frame, source_frame, max_retries=0, log_error=True, at_time=0, max_duration=1.0):
+    def _get_frame_transform(self, target_frame, source_frame, max_retries=1, log_error=True, at_time=0, max_duration=1.0):
         """
         Returns the latest transform from source_frame's coordinate frame
         to the target_frame's coordinate frame
