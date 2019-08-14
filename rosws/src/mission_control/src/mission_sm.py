@@ -21,8 +21,7 @@ class YawRotationScan(smach.State):
     
     def execute(self, userdata):
         rospy.loginfo('Executing the YAW_ROTATION_SCAN state')
-        rospy.sleep(rospy.Duration(1.0))
-        #self._mission_controller.yaw_rotation_scan()
+        self._mission_controller.yaw_rotation_scan()
         return 'finished'
 
 class Explore(smach.State):
