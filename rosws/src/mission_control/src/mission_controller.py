@@ -141,6 +141,40 @@ class MissionController(object):
                 self._pending_cubes = filter(lambda c: c.number != cube.number, self._pending_cubes)
                 self._handle_discovered_cube(cube, transform)
         
+    def yaw_rotation_scan(self):
+        vel_msg = Twist()
+     
+        #How much will you spin in degrees, since it is more accurate than using directly rads
+        angle = 180
+
+        #degrees to radians
+        relative_angle = angle*math.pi/180
+
+        vel_msg.linear.x=0
+        vel_msg.linear.y=0
+        vel_msg.linear.z=0
+        vel_msg.angular.x = 0
+        vel_msg.angular.y = 0
+        #Moving around z CounterClockWise
+        vel_msg.angular.z = 0.5
+
+        for x in range(0,2):
+            rospy.loginfo('Rotating')
+            #Setting the current time for distance calculus
+            t0 = rospy.Time.now().to_sec()
+            current_angle = 0
+            print x
+            while(current_angle < relative_angle):
+                self.velocity_publisher.publish(vel_msg)
+                t1 = rospy.Time.now().to_sec()
+                current_angle = 0.5*(t1-t0)
+            rospy.sleep(2)
+        
+        rospy.loginfo('Rotation completed')
+        #Forcing our robot to stop
+        vel_msg.angular.z = 0
+        self.velocity_publisher.publish(vel_msg)
+
     def _visit_cube(self, cube):
         """
         Creates a goal to move towards a cube
