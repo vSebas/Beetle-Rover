@@ -61,8 +61,7 @@ class MissionController(object):
 
         self._move_base_client = actionlib.SimpleActionClient('move_base', MoveBaseAction)
         self._cmd_vel_publisher = rospy.Publisher('base_footprint/cmd_vel', Twist, queue_size=5)
-        # TODO: FIXME:
-        # self._obstacles_publisher = rospy.Publisher('obstacles', ObstacleArrayMsg, queue_size=5)
+        self._obstacles_publisher = rospy.Publisher('move_base/TebLocalPlannerROS/obstacles', ObstacleArrayMsg, queue_size=5)
 
     def run(self):
             """ Runs the mission """
@@ -99,10 +98,7 @@ class MissionController(object):
 
         obstacle_msg.obstacles.append(obstacle)
 
-        # TODO:
-        # FIXME: Could not process inbound connection: topic types do not match: 
-        # [sensor_msgs/PointCloud2] vs. [costmap_converter/ObstacleArrayMsg]{'topic': '/obstacles', 'tcp_nodelay': '0', 'md5sum': '1158d486dd51d683ce2f1be655c3c181', 'type': 'sensor_msgs/PointCloud2', 'callerid': '/move_base'}
-        #self._obstacles_publisher.publish(obstacle_msg)
+        self._obstacles_publisher.publish(obstacle_msg)
 
     def _euclidean_distance_to_rover(self, cube):
         """
