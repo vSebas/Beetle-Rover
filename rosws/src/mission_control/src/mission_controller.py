@@ -39,9 +39,11 @@ class MissionController(object):
     subcomponents to try to achieve the required tasks
     """
 
-    def __init__(self, n_total_cubes=7, n_target_cubes=3):
+    def __init__(self, n_total_cubes=7, n_target_cubes=4, global_frame_id='world'):
         rospy.on_shutdown(self._shutdown)
 
+        # Global frame id can vary in simulation and real scenarios
+        self._global_frame_id = global_frame_id
         # Keeps a record of cubes pending to be discovered
         self._pending_cubes = []
         # Keeps a record of visited target cubes
@@ -78,26 +80,26 @@ class MissionController(object):
         Returns rover's position and orientation from the 
         base_footprint frame in relation to the world's frame
         """
-        return self._get_frame_transform('world', 'base_footprint')
+        return self._get_frame_transform(self._global_frame_id, 'base_footprint')
 
     def _get_cube_transformation(self, cube):
         """
         Returns the transform from the cube's coordinate frame
         to the world's coordinate frame
         """
-        return self._get_frame_transform('world', cube.frame_id)
+        return self._get_frame_transform(self._global_frame_id, cube.frame_id)
 
-    def _publish_obstacle(self, cube):
+    def _publish_obstacles(self):
         obstacle_msg = ObstacleArrayMsg()
         obstacle_msg.header.stamp = rospy.Time.now()
-        obstacle_msg.header.frame_id = 'world'
-        
-        obstacle = ObstacleMsg()
-        obstacle.id = cube.number
-        obstacle.polygon.points = cube.bounding_box
+        obstacle_msg.header.frame_id = self._global_frame_id
 
-        obstacle_msg.obstacles.append(obstacle)
-
+        for cube in self._obstacle_cubes:
+            obstacle = ObstacleMsg()
+            obstacle.id = cube.number
+            obstacle.polygon.points = cube.forbidden_zone_bounding_box
+            obstacle_msg.obstacles.append(obstacle)
+        print(obstacle_msg.obstacles)
         self._obstacles_publisher.publish(obstacle_msg)
 
     def _euclidean_distance_to_rover(self, cube):
@@ -126,7 +128,7 @@ class MissionController(object):
         else:
             rospy.loginfo('Cube is an obstacle')
             self._obstacle_cubes.append(cube)
-            self._publish_obstacle(cube)
+            self._publish_obstacles()
 
     def _discover_cubes(self):
         """
@@ -134,7 +136,7 @@ class MissionController(object):
         when it detects a cube
         """
         for cube in self._pending_cubes:
-            transform = self._get_frame_transform('world', cube.frame_id, log_error=True)
+            transform = self._get_frame_transform(self._global_frame_id, cube.frame_id, log_error=True)
             if transform:
                 self._pending_cubes = filter(lambda c: c.number != cube.number, self._pending_cubes)
                 self._handle_discovered_cube(cube, transform)
@@ -148,7 +150,7 @@ class MissionController(object):
         self._move_base_client.wait_for_server(rospy.Duration(4.0))
 
         goal = MoveBaseGoal()
-        goal.target_pose.header.frame_id = 'world'
+        goal.target_pose.header.frame_id = self._global_frame_id
         goal.target_pose.header.stamp = rospy.Time.now()
 
         goal.target_pose.pose.position.x = cube.approach_zone_xpos

@@ -37,7 +37,7 @@ class ChallengeSimulation(object):
     MIN_Y = 1.5
     MAX_Y = 9.0
 
-    INFLUENCE_AREA_RADIUS = 5.5
+    INFLUENCE_AREA_RADIUS = 10.5
 
     # Use a different orientation for evil and good cubes to tell them apart visually.
     EVIL_CUBE_ORIENTATION = math.radians(-90)
