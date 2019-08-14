@@ -31,19 +31,20 @@ import turtlesim.msg
 
 class ChallengeSimulation(object):
 
-    min_x = 1.5
-    max_x = 9.0
+    MIN_X = 1.5
+    MAX_X = 9.0
 
-    min_y = 1.5
-    max_y = 9.0
+    MIN_Y = 1.5
+    MAX_Y = 9.0
 
-    influence_area_radius = 5.5
+    INFLUENCE_AREA_RADIUS = 5.5
 
     # Use a different orientation for evil and good cubes to tell them apart visually.
-    evil_cube_orientation = math.radians(90)
-    good_cube_orientation = math.radians(-90)
+    EVIL_CUBE_ORIENTATION = math.radians(-90)
+    GOOD_CUBE_ORIENTATION = math.radians(90)
 
     def __init__(self):
+        rospy.on_shutdown(self._shutdown)
         # We know there will be 7 cubes in total for the task
         self._cubes = [Cube(i) for i in range(1, 8)]
 
@@ -52,20 +53,20 @@ class ChallengeSimulation(object):
         self._tf_broadcaster = tf2_ros.TransformBroadcaster()
         self._base_footprint_pos_subscriber = None
         self._timer = None
-        self._global_frame_id = ''
+        self._global_frame_id = None
         
     def _initialize_coordinates(self):
         # Create coordinates set and add first point
         coordinates = []
-        coordinates.append((self._uniform_dist(self.min_x, self.max_x), self._uniform_dist(self.min_y, self.max_y)))
+        coordinates.append((self._uniform_dist(self.MIN_X, self.MAX_X), self._uniform_dist(self.MIN_Y, self.MAX_Y)))
         # Create the remaining points
         N = len(self._cubes)
         while(len(coordinates) != N):
             point = None
             while point is None:
                 # our new candidate point
-                x = self._uniform_dist(self.min_x, self.max_x)
-                y = self._uniform_dist(self.min_y, self.max_y)
+                x = self._uniform_dist(self.MIN_X, self.MAX_X)
+                y = self._uniform_dist(self.MIN_Y, self.MAX_Y)
                 for (x2, y2) in coordinates:
                     if self._is_inside_cube_area(x,y,x2,y2):
                         rospy.loginfo('Collision between turtles detected!')
@@ -81,8 +82,8 @@ class ChallengeSimulation(object):
 
     def _is_inside_cube_area(self, x1, y1, x2, y2):
         ''' Returns True if cube2's position is inside cube1's area of influece '''
-        xcheck = x1 - self.influence_area_radius <= x2 and x2 <= x1 + self.influence_area_radius
-        ycheck = y1 - self.influence_area_radius <= y2 and y2 <= y1 + self.influence_area_radius
+        xcheck = x1 - self.INFLUENCE_AREA_RADIUS <= x2 and x2 <= x1 + self.INFLUENCE_AREA_RADIUS
+        ycheck = y1 - self.INFLUENCE_AREA_RADIUS <= y2 and y2 <= y1 + self.INFLUENCE_AREA_RADIUS
         return xcheck and ycheck
 
     def _uniform_dist(self, a=0.0, b=1.0):
@@ -96,7 +97,7 @@ class ChallengeSimulation(object):
         for cube in self._cubes:
             try:
                 spawn = rospy.ServiceProxy('spawn', Spawn)
-                yaw_orientation = math.radians(90 if cube.is_target else -90)
+                yaw_orientation = self.GOOD_CUBE_ORIENTATION if cube.is_target else self.EVIL_CUBE_ORIENTATION
                 cube.orientation = Quaternion(*quaternion_from_euler(0.0, 0.0, yaw_orientation))
                 response = spawn(cube.xpos, cube.ypos, yaw_orientation, cube.frame_id)
             except rospy.ServiceException, e:
@@ -146,6 +147,10 @@ class ChallengeSimulation(object):
         self._create_turtles()
         self._create_rover()
         self._timer = rospy.Timer(rospy.Duration(1.0/2.0), self._broadcast_tfs_callback) # 2 hz
+
+    def _shutdown(self):
+        if self._timer is not None:
+            self._timer.shutdown()
 
 def main():
     try:
