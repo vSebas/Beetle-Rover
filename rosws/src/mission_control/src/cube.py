@@ -1,7 +1,7 @@
 from geometry_msgs.msg import Point32
 
 # Cube size in meters
-CUBE_SIZE = 0.20
+CUBE_SIZE = 0.15
 # Approach zone size in meters
 APPROACH_ZONE_SIZE = 0.30
 # Forbidden zone in meters
@@ -53,7 +53,7 @@ class Cube(object):
         return self.ypos + CUBE_SIZE + APPROACH_ZONE_SIZE/2.0
 
     @property
-    def bounding_box(self):
+    def forbidden_zone_bounding_box(self):
         """
         * = offset
 
@@ -75,19 +75,16 @@ class Cube(object):
         
         """
 
-        offset = CUBE_SIZE
-        # If the cube is not a target we
-        # should "inflate" it's size
-        # so that it includes it's forbidden zone
+        # If it is a target cube it has no bounding box
+        vertices = []
         if not self.is_target:
-            offset += FORBIDDEN_ZONE_SIZE
-
-        v1 = Point32(x=self.xpos-offset, y=self.ypos+offset)
-        v2 = Point32(x=self.xpos+offset, y=self.ypos+offset)
-        v3 = Point32(x=self.xpos+offset, y=self.ypos-offset)
-        v4 = Point32(x=self.xpos-offset, y=self.ypos-offset)
-        
-        return [v1, v2, v3, v4]
+            offset = CUBE_SIZE + FORBIDDEN_ZONE_SIZE
+            v1 = Point32(x=self.xpos-offset, y=self.ypos+offset)
+            v2 = Point32(x=self.xpos+offset, y=self.ypos+offset)
+            v3 = Point32(x=self.xpos+offset, y=self.ypos-offset)
+            v4 = Point32(x=self.xpos-offset, y=self.ypos-offset)
+            vertices = [v1, v2, v3, v4]
+        return vertices
     
     @property
     def frame_id(self):
