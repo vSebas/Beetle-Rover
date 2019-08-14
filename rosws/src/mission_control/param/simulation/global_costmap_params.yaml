@@ -6,11 +6,10 @@ global_costmap:
    static_map: false
    transform_tolerance: 0.5
    # added:
-   width: 6
-   height: 6
-   resolution: 0.1
-   origin_x: -3 # means i am in the centre in the beginning
-   origin_y: -3
+   width: 20
+   height: 20
+   origin_x: -5 # means i am in the centre in the beginning
+   origin_y: -5
    # resolution: 0.05 #meters/cell
    plugins:
     #  - {name: static_layer,            type: "costmap_2d::StaticLayer"}

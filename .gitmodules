@@ -2,3 +2,6 @@
 	path = rosws/src/aruco_analyzer
 	url = git@gitlab.tubit.tu-berlin.de:aegarcia/aruco_analyzer.git
     branch = custom-camera
+[submodule "rosws/src/executive_smach"]
+	path = rosws/src/executive_smach
+	url = https://github.com/mojin-robotics/executive_smach.git

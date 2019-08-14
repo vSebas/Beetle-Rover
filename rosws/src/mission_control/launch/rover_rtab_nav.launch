@@ -11,7 +11,7 @@
 <arg name = "depth_registered_topic" value = "/sensors/camFront/aligned_depth_to_color/image_raw" />
 <arg name = "camera_info_topic"      value = "/sensors/camFront/color/camera_info" />
 
-<include file="$(find rover_nav)/launch/rtab_nav.launch">
+<include file="$(find rtabmap_ros)/launch/rtab_nav.launch">
     <arg name = "launch_tf"              value = 'False' />>
     <arg name = "footprint_frame"        value = "base_footprint" />
     <arg name = "output_frame"           value = "base_footprint" />
@@ -27,6 +27,6 @@
     <arg name = "subscribe_scan"         value = "false" />
     <arg name = "rtabmapviz"             value = "false" />
     <arg name = "cmd_topic"              value = "cmd_vel"/>
-    <arg name = "cfg"                    value = "$(find rover_nav)/param/rtab_bear.ini"/>
+    <arg name = "cfg"                    value = "$(find mission_control)/param/rover/rtab_bear.ini"/>
   </include>
 </launch>
