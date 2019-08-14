@@ -27,9 +27,5 @@
   <node pkg="rosservice" type="rosservice" name="spawn8" args="call --wait /spawn 2.0 9.0 0.0 'cube007'" />
   <node pkg="turtle_tf" type="turtle_tf_broadcaster" name="Cube7_tf" args= "cube007" />
 
-
-
-  
-
 </launch>
 
