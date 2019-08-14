@@ -17,6 +17,9 @@ References:
 
 4) How to use an obstacle publisher?
    * http://wiki.ros.org/teb_local_planner/Tutorials/Incorporate%20customized%20Obstacles
+
+5) How to cmd the rover to rotate?
+    * http://wiki.ros.org/turtlesim/Tutorials/Rotating%20Left%20and%20Right
 """
 
 import math
@@ -143,37 +146,26 @@ class MissionController(object):
         
     def yaw_rotation_scan(self):
         vel_msg = Twist()
-     
-        #How much will you spin in degrees, since it is more accurate than using directly rads
-        angle = 180
-
-        #degrees to radians
-        relative_angle = angle*math.pi/180
 
         vel_msg.linear.x=0
         vel_msg.linear.y=0
         vel_msg.linear.z=0
         vel_msg.angular.x = 0
         vel_msg.angular.y = 0
-        #Moving around z CounterClockWise
-        vel_msg.angular.z = 0.5
 
-        for x in range(0,2):
-            rospy.loginfo('Rotating')
-            #Setting the current time for distance calculus
-            t0 = rospy.Time.now().to_sec()
-            current_angle = 0
-            print x
-            while(current_angle < relative_angle):
-                self.velocity_publisher.publish(vel_msg)
-                t1 = rospy.Time.now().to_sec()
-                current_angle = 0.5*(t1-t0)
-            rospy.sleep(2)
-        
-        rospy.loginfo('Rotation completed')
-        #Forcing our robot to stop
+        angular_speed = 0.5 # rad/s
+        vel_msg.angular.z = angular_speed # CCW rotation in yaw axis
+
+        current_angle = math.radians(0)
+        target_angle = math.radians(360)
+        t0 = rospy.Time.now().to_sec()
+
+        while current_angle < target_angle:
+            self._cmd_vel_publisher.publish(vel_msg)
+            t_now = rospy.Time.now().to_sec()
+            current_angle = angular_speed*(t_now-t0)
         vel_msg.angular.z = 0
-        self.velocity_publisher.publish(vel_msg)
+        self._cmd_vel_publisher.publish(vel_msg)
 
     def _visit_cube(self, cube):
         """
