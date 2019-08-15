@@ -11,7 +11,7 @@ class Initialization(smach.State):
     
     def execute(self, userdata):
         rospy.loginfo('Executing the INITIAL_CHECK state')
-        rospy.sleep(rospy.Duration(1.0))
+        self._mission_controller.initialization()
         return 'success'
 
 class YawRotationScan(smach.State):
@@ -31,9 +31,14 @@ class Explore(smach.State):
     
     def execute(self, userdata):
         rospy.loginfo('Executing the EXPLORE state')
-        rospy.sleep(rospy.Duration(1.0))
-        #FIXME: implement 
-        return 'no_visits_pending'
+        if self._mission_controller.all_cubes_visited():
+            return 'all_cubes_visited'
+        else:
+            if self._mission_controller.cube_visits_pending():
+                return 'visits_pending'
+            else:
+                self._mission_controller.explore()
+                return 'no_visits_pending'
 
 class VisitGoodCube(smach.State):
     def __init__(self, mission_controller):
@@ -42,7 +47,7 @@ class VisitGoodCube(smach.State):
     
     def execute(self, userdata):
         rospy.loginfo('Executing the VISIT_GOOD_CUBE state')
-        rospy.sleep(rospy.Duration(1.0))
+        self._mission_controller.visit_next_pending_cube()
         return 'finished'
 
 class Finish(smach.State):

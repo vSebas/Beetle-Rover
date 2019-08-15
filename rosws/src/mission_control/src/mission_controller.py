@@ -68,15 +68,49 @@ class MissionController(object):
         self._cmd_vel_publisher = rospy.Publisher('base_footprint/cmd_vel', Twist, queue_size=5)
         self._obstacles_publisher = rospy.Publisher('move_base/TebLocalPlannerROS/obstacles', ObstacleArrayMsg, queue_size=5)
 
-    def run(self):
-            """ Runs the mission """
-            # TODO: Add pending logic for mission state control
-            self._pending_cubes = [Cube(i+1) for i in range(self._n_total_cubes)]
-            while not rospy.is_shutdown() and not self._mission_finished():
-                self._discover_cubes()
-                next_goal = self._nearest_unvisited_cube()
-                if next_goal is not None:
-                    self._visit_cube(next_goal)
+        self._cube_discovery_timer = None
+
+    def initialization(self):
+        self._pending_cubes = [Cube(i+1) for i in range(self._n_total_cubes)]
+        # Shutdown this timer when all cubes are discovered.
+        self._cube_discovery_timer = rospy.Timer(rospy.Duration(1.0/10.0), self._handle_cube_discovery_timeout)
+
+    def yaw_rotation_scan(self):
+        vel_msg = Twist()
+
+        vel_msg.linear.x=0
+        vel_msg.linear.y=0
+        vel_msg.linear.z=0
+        vel_msg.angular.x = 0
+        vel_msg.angular.y = 0
+
+        angular_speed = 0.5 # rad/s
+        vel_msg.angular.z = angular_speed # CCW rotation in yaw axis
+
+        current_angle = math.radians(0)
+        target_angle = math.radians(360)
+        t0 = rospy.Time.now().to_sec()
+
+        while current_angle < target_angle:
+            self._cmd_vel_publisher.publish(vel_msg)
+            t_now = rospy.Time.now().to_sec()
+            current_angle = angular_speed*(t_now-t0)
+        vel_msg.angular.z = 0
+        self._cmd_vel_publisher.publish(vel_msg)
+
+    def cube_visits_pending(self):
+        return self._nearest_unvisited_cube() is not None
+    
+    def all_cubes_visited(self):
+        return False # FIXME
+
+    def explore(self):
+        pass # FIXME
+
+    def visit_next_pending_cube(self):
+        next_goal = self._nearest_unvisited_cube()
+        if next_goal is not None:
+            self._visit_cube(next_goal)
     
     def _get_rover_transformation(self):
         """
@@ -102,7 +136,6 @@ class MissionController(object):
             obstacle.id = cube.number
             obstacle.polygon.points = cube.forbidden_zone_bounding_box
             obstacle_msg.obstacles.append(obstacle)
-        print(obstacle_msg.obstacles)
         self._obstacles_publisher.publish(obstacle_msg)
 
     def _euclidean_distance_to_rover(self, cube):
@@ -133,7 +166,7 @@ class MissionController(object):
             self._obstacle_cubes.append(cube)
             self._publish_obstacles()
 
-    def _discover_cubes(self):
+    def _handle_cube_discovery_timeout(self, event):
         """
         Listens to the transformations that the aruco_analyzer publishes
         when it detects a cube
@@ -143,29 +176,6 @@ class MissionController(object):
             if transform:
                 self._pending_cubes = filter(lambda c: c.number != cube.number, self._pending_cubes)
                 self._handle_discovered_cube(cube, transform)
-        
-    def yaw_rotation_scan(self):
-        vel_msg = Twist()
-
-        vel_msg.linear.x=0
-        vel_msg.linear.y=0
-        vel_msg.linear.z=0
-        vel_msg.angular.x = 0
-        vel_msg.angular.y = 0
-
-        angular_speed = 0.5 # rad/s
-        vel_msg.angular.z = angular_speed # CCW rotation in yaw axis
-
-        current_angle = math.radians(0)
-        target_angle = math.radians(360)
-        t0 = rospy.Time.now().to_sec()
-
-        while current_angle < target_angle:
-            self._cmd_vel_publisher.publish(vel_msg)
-            t_now = rospy.Time.now().to_sec()
-            current_angle = angular_speed*(t_now-t0)
-        vel_msg.angular.z = 0
-        self._cmd_vel_publisher.publish(vel_msg)
 
     def _visit_cube(self, cube):
         """
