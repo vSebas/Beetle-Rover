@@ -1,0 +1,20 @@
+initial,
+setup [label="INITIALIZATION"],
+yaw_rotation_scan [label="YAW_ROTATION_SCAN"],
+explore [label="EXPLORE"],
+# If there's no cubes yet, it will try to explore.
+visit_good_cube [label="VISIT_GOOD_CUBE"],
+finish [label="FINISH"],
+final;
+
+initial => setup;
+setup => yaw_rotation_scan : success;
+setup => finish : failure;
+yaw_rotation_scan => visit_good_cube : finished;
+explore => yaw_rotation_scan : no_target_cube_visit_pending;
+explore => visit_good_cube : target_cube_visit_pending;
+explore => finish : all_target_cubes_visited;
+visit_good_cube => explore : explore;
+visit_good_cube => finish : all_target_cubes_visited;
+visit_good_cube => visit_good_cube : target_cube_visit_pending;
+finish => final;

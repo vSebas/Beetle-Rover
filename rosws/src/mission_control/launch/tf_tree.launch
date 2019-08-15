@@ -1,0 +1,22 @@
+<launch>
+  <arg name="footprint_frame" default = "/base_footprint" />
+  <node
+    pkg="tf"
+    type="static_transform_publisher"
+    name="base_link_broadcaster"
+    args="0 0 0.1234 0 0 0 $(arg footprint_frame) /base_link 100"
+  />
+  <node
+    pkg="tf"
+    type="static_transform_publisher"
+    name="camFront_link_broadcaster"
+    args="0.155 0 0.135 0 0.35 0 /base_link /camFront_link 100"
+  />
+  <node
+    pkg="tf"
+    type="static_transform_publisher"
+    name="camFront_frame_broadcaster"
+    args="0 -0.05 0 -1.57 0 -1.57 /camFront_link /camFront_frame 100"
+  />
+
+</launch>

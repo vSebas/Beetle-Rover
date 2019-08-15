@@ -1,0 +1,24 @@
+# basic configuration
+---
+wheel_radius: 0.132                   # Wheel radius in m
+distance_center_wheels: 0.18       # distance in m
+speed_qpps_factor: 14043 #28086
+pwm_factor: 41.34
+controller_mode: PWM
+controllers:
+  controller_0:
+    baudrate: 115200
+    serial_port: /dev/RoboClawFront
+    left: 
+      - "M1" 
+    right:
+      - "M2"
+  controller_1:
+    baudrate: 115200
+    serial_port: /dev/RoboClawBack
+    left: 
+      - "M2" 
+    right:
+      - "M1"
+
+
