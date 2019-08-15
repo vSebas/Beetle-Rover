@@ -123,14 +123,13 @@ class MissionController(object):
         return success
     
     def explore(self):
-        for _ in range(5):
-            self._explore_step()
+        self._explore_step() # Just do one step
 
     def _explore_step(self):
         # Get current pose
         rovt = self._get_rover_transformation()
-        new_xpos = rovt.transform.translation.x + self._uniform_dist(0.12, 0.20) * (1 if self._bernoulli_trial(0.5) else -1)
-        new_ypos = rovt.transform.translation.y + self._uniform_dist(0.12, 0.20) * (1 if self._bernoulli_trial(0.5) else -1)
+        new_xpos = rovt.transform.translation.x + self._uniform_dist(1.5, 2.5) * (1 if self._bernoulli_trial(0.5) else -1)
+        new_ypos = rovt.transform.translation.y + self._uniform_dist(1.5, 2.5) * (1 if self._bernoulli_trial(0.5) else -1)
         # Get current orientation's quaternion
         q = rovt.transform.rotation
         q1 = [q.x, q.y, q.z, q.w]
