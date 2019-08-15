@@ -73,7 +73,7 @@ class MissionController(object):
     def initialization(self):
         self._pending_cubes = [Cube(i+1) for i in range(self._n_total_cubes)]
         # Shutdown this timer when all cubes are discovered.
-        self._cube_discovery_timer = rospy.Timer(rospy.Duration(1.0/10.0), self._discover_cubes)
+        self._cube_discovery_timer = rospy.Timer(rospy.Duration(1.0/10.0), self._handle_cube_discovery_timeout)
 
     def yaw_rotation_scan(self):
         vel_msg = Twist()
@@ -109,8 +109,8 @@ class MissionController(object):
 
     def visit_next_pending_cube(self):
         next_goal = self._nearest_unvisited_cube()
-        assert(next_goal is not None)
-        self._visit_cube(next_goal)
+        if next_goal is not None:
+            self._visit_cube(next_goal)
     
     def _get_rover_transformation(self):
         """
@@ -166,7 +166,7 @@ class MissionController(object):
             self._obstacle_cubes.append(cube)
             self._publish_obstacles()
 
-    def _discover_cubes(self, event):
+    def _handle_cube_discovery_timeout(self, event):
         """
         Listens to the transformations that the aruco_analyzer publishes
         when it detects a cube
