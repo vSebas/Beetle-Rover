@@ -123,7 +123,7 @@ class MissionController(object):
         return success
     
     def explore(self):
-        for _ in range(15):
+        for _ in range(5):
             self._explore_step()
 
     def _explore_step(self):
@@ -190,6 +190,7 @@ class MissionController(object):
             obstacle.polygon.points = cube.forbidden_zone_bounding_box
             obstacle_msg.obstacles.append(obstacle)
         self._obstacles_publisher.publish(obstacle_msg)
+        rospy.loginfo('Published cube obstacles')
 
     def _euclidean_distance_to_rover(self, cube):
         """
@@ -225,7 +226,7 @@ class MissionController(object):
         when it detects a cube
         """
         for cube in self._pending_cubes:
-            transform = self._get_frame_transform(self._global_frame_id, cube.frame_id, log_error=True)
+            transform = self._get_frame_transform(self._global_frame_id, cube.frame_id, log_error=False)
             if transform:
                 self._pending_cubes = filter(lambda c: c.number != cube.number, self._pending_cubes)
                 self._handle_discovered_cube(cube, transform)
