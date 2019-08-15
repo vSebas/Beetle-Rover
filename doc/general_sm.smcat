@@ -1,0 +1,8 @@
+initial,
+nav_and_explore [label="NAVIGATE_AND_EXPLORE"],
+handle_cube_tfs [label="HANDLE_CUBE_TFS"];
+
+initial => nav_and_explore;
+handle_cube_tfs => nav_and_explore : finished;
+# 10 hz
+nav_and_explore => handle_cube_tfs : timeout;
