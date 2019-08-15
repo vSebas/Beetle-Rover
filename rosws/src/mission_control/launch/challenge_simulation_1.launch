@@ -5,25 +5,25 @@
   <node pkg="rosservice" type="rosservice" name="spawn1" args="call --wait /spawn 0.5 0.5 0.0 'base_footprint'" />
   <node pkg="turtle_tf" type="turtle_tf_broadcaster" name="Rover_TF" args= "base_footprint" />
 
-  <node pkg="rosservice" type="rosservice" name="spawn2" args="call --wait /spawn 5.0 5.0 0.7 'cube001'" />
+  <node pkg="rosservice" type="rosservice" name="spawn2" args="call --wait /spawn 5.0 5.0 1.57079 'cube001'" />
   <node pkg="turtle_tf" type="turtle_tf_broadcaster" name="Cube1_tf" args= "cube001" />
 
-  <node pkg="rosservice" type="rosservice" name="spawn3" args="call --wait /spawn 4.0 8.0 1.5 'cube002'" />
+  <node pkg="rosservice" type="rosservice" name="spawn3" args="call --wait /spawn 4.0 8.0 4.7123 'cube002'" />
   <node pkg="turtle_tf" type="turtle_tf_broadcaster" name="Cube2_tf" args= "cube002" />
   
-  <node pkg="rosservice" type="rosservice" name="spawn4" args="call --wait /spawn 5.0 1.0 3.0 'cube003'" />
+  <node pkg="rosservice" type="rosservice" name="spawn4" args="call --wait /spawn 5.0 1.0 1.57079 'cube003'" />
   <node pkg="turtle_tf" type="turtle_tf_broadcaster" name="Cube3_tf" args= "cube003" />
   
-  <node pkg="rosservice" type="rosservice" name="spawn5" args="call --wait /spawn 6.0 4.0 0.0 'cube004'" />
+  <node pkg="rosservice" type="rosservice" name="spawn5" args="call --wait /spawn 6.0 4.0 4.7123 'cube004'" />
   <node pkg="turtle_tf" type="turtle_tf_broadcaster" name="Cube4_tf" args= "cube004" />
   
-  <node pkg="rosservice" type="rosservice" name="spawn6" args="call --wait /spawn 3.0 1.0 4.0 'cube005'" />
+  <node pkg="rosservice" type="rosservice" name="spawn6" args="call --wait /spawn 3.0 1.0 1.57079 'cube005'" />
   <node pkg="turtle_tf" type="turtle_tf_broadcaster" name="Cube5_tf" args= "cube005" />
   
-  <node pkg="rosservice" type="rosservice" name="spawn7" args="call --wait /spawn 1.5 6.3 5.8 'cube006'" />
+  <node pkg="rosservice" type="rosservice" name="spawn7" args="call --wait /spawn 1.5 6.3 4.7123 'cube006'" />
   <node pkg="turtle_tf" type="turtle_tf_broadcaster" name="Cube6_tf" args= "cube006" />
   
-  <node pkg="rosservice" type="rosservice" name="spawn8" args="call --wait /spawn 2.0 9.0 0.0 'cube007'" />
+  <node pkg="rosservice" type="rosservice" name="spawn8" args="call --wait /spawn 2.0 9.0 1.57079 'cube007'" />
   <node pkg="turtle_tf" type="turtle_tf_broadcaster" name="Cube7_tf" args= "cube007" />
 
 </launch>

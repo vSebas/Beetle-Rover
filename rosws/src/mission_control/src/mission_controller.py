@@ -135,7 +135,7 @@ class MissionController(object):
         q = rovt.transform.rotation
         q1 = [q.x, q.y, q.z, q.w]
         # Generate a random orientation angle
-        yaw_angle = (1 if self._bernoulli_trial(0.5) else -1) * random.choice([0, 45, 90, 180])
+        yaw_angle = random.choice([-90, -45, 0, 45, 90, 180])
         q2 = quaternion_from_euler(0, 0, math.radians(yaw_angle))
         # Create rotated quaternion
         q_rot = quaternion_multiply(q1, q2)
