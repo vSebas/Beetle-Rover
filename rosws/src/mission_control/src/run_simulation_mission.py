@@ -10,7 +10,7 @@ if __name__ == '__main__':
         #controller = MissionController(n_total_cubes=7, n_target_cubes=3)
         #controller.yaw_rotation_scan()
         #controller.run()
-        sm = create_mission_state_machine(n_total_cubes=7, n_target_cubes=3)
+        sm = create_mission_state_machine(n_total_cubes=7, n_target_cubes=4)
         outcome = sm.execute()
     except rospy.ROSInitException:
         rospy.loginfo('Mission controller ended')
