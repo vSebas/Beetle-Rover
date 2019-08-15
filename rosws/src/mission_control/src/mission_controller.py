@@ -20,10 +20,14 @@ References:
 
 5) How to cmd the rover to rotate?
     * http://wiki.ros.org/turtlesim/Tutorials/Rotating%20Left%20and%20Right
+
+6) How to rotate a quaternion?
+    * http://wiki.ros.org/tf2/Tutorials/Quaternions 
 """
 
 import math
 import sys
+import random
 from threading import Thread
 
 import actionlib
@@ -33,6 +37,7 @@ from actionlib_msgs.msg import GoalStatus
 from geometry_msgs.msg import Transform, Twist, Quaternion
 from move_base_msgs.msg import MoveBaseAction, MoveBaseGoal
 from costmap_converter.msg import ObstacleArrayMsg, ObstacleMsg
+from tf.transformations import quaternion_from_euler, quaternion_multiply
 
 from cube import Cube
 
@@ -71,10 +76,16 @@ class MissionController(object):
         self._cube_discovery_timer = None
 
     def initialization(self):
+        random.seed()
         self._pending_cubes = [Cube(i+1) for i in range(self._n_total_cubes)]
         # Shutdown this timer when all cubes are discovered.
         self._cube_discovery_timer = rospy.Timer(rospy.Duration(1.0/10.0), self._handle_cube_discovery_timeout)
 
+    def finalize(self):
+        if self._cube_discovery_timer is not None:
+            self._cube_discovery_timer.shutdown()
+            self._cube_discovery_timer = None
+        
     def yaw_rotation_scan(self):
         vel_msg = Twist()
 
@@ -98,20 +109,62 @@ class MissionController(object):
         vel_msg.angular.z = 0
         self._cmd_vel_publisher.publish(vel_msg)
 
-    def cube_visits_pending(self):
-        return self._nearest_unvisited_cube() is not None
-    
-    def all_cubes_visited(self):
-        return False # FIXME
+    def target_cubes_pending_visit(self):
+        return not self.all_target_cubes_visited()
 
-    def explore(self):
-        pass # FIXME
+    def all_target_cubes_visited(self):
+        return len(self._visited_cubes) == self._n_target_cubes    
 
-    def visit_next_pending_cube(self):
+    def visit_next_target_cube(self):
         next_goal = self._nearest_unvisited_cube()
+        success = False
         if next_goal is not None:
-            self._visit_cube(next_goal)
+            success = self._visit_cube(next_goal)
+        return success
     
+    def explore(self):
+        for _ in range(15):
+            self._explore_step()
+
+    def _explore_step(self):
+        # Get current pose
+        rovt = self._get_rover_transformation()
+        new_xpos = rovt.transform.translation.x + self._uniform_dist(0.12, 0.20) * (1 if self._bernoulli_trial(0.5) else -1)
+        new_ypos = rovt.transform.translation.y + self._uniform_dist(0.12, 0.20) * (1 if self._bernoulli_trial(0.5) else -1)
+        # Get current orientation's quaternion
+        q = rovt.transform.rotation
+        q1 = [q.x, q.y, q.z, q.w]
+        # Generate a random orientation angle
+        yaw_angle = (1 if self._bernoulli_trial(0.5) else -1) * random.choice([0, 45, 90, 180])
+        q2 = quaternion_from_euler(0, 0, math.radians(yaw_angle))
+        # Create rotated quaternion
+        q_rot = quaternion_multiply(q1, q2)
+        new_orientation = Quaternion(*q_rot)
+        # Create new goal
+        self._move_base_client.wait_for_server(rospy.Duration(2.0))
+
+        goal = MoveBaseGoal()
+        goal.target_pose.header.frame_id = self._global_frame_id
+        goal.target_pose.header.stamp = rospy.Time.now()
+
+        goal.target_pose.pose.position.x = new_xpos
+        goal.target_pose.pose.position.y = new_ypos
+        goal.target_pose.pose.position.z = 0
+        goal.target_pose.pose.orientation = new_orientation
+
+        if not self._move(goal):
+            rospy.loginfo('Failed to move to random location')
+
+    def _uniform_dist(self, a=0.0, b=1.0):
+        sample = a + (b-a)*random.random()
+        assert(sample < b)
+        assert(sample >= a)
+        return sample
+
+    def _bernoulli_trial(self, p):
+	    assert(p <= 1.0)
+	    return self._uniform_dist(0.0, 1.0) < p
+
     def _get_rover_transformation(self):
         """
         Returns rover's position and orientation from the 
@@ -181,6 +234,7 @@ class MissionController(object):
         """
         Creates a goal to move towards a cube
         and sends that goal to the move base server
+        Returns True if the cube was visited
         """
         rospy.loginfo('Attempting to move towards {}'.format(cube))
         self._move_base_client.wait_for_server(rospy.Duration(4.0))
@@ -196,8 +250,10 @@ class MissionController(object):
 
         if self._move(goal):
             self._handle_visited_cube(cube)
+            return True
         else:
             rospy.loginfo('Failed to move towards {}'.format(cube))
+            return False
 
     def _nearest_unvisited_cube(self):
         if self._unvisited_cubes:
