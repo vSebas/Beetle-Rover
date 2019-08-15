@@ -25,8 +25,10 @@ rosrun mission_control run_simulation_mission.py
 
 ### General State Machine
 ![General State Machine](doc/general_sm.png)
+
 Diagram generated using [state-machine-cat](https://github.com/sverweij/state-machine-cat).
 
 ### Navigate and Explore State
 ![Navigate and Explore State Machine](doc/nav_explore_sm.png)
+
 Diagram generated using [state-machine-cat](https://github.com/sverweij/state-machine-cat).
